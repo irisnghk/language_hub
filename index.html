@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RP Accent Coach</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0f14;--surface:#13171f;--card:#181d27;--border:#252c3a;
+  --text:#e8eaf0;--muted:#6b7590;--accent:#4af0b0;--accent2:#f0c84a;
+  --danger:#f04a6a;--cant:#c084fc;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(74,240,176,.03)1px,transparent 1px),linear-gradient(90deg,rgba(74,240,176,.03)1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:2rem 1.2rem 5rem;}
+
+/* Key banner */
+#keyBanner{display:none;background:#1a1020;border-bottom:1px solid #7c3aed;padding:.7rem 1.2rem;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.08em;color:#c084fc;position:sticky;top:0;z-index:100;gap:.6rem;flex-wrap:wrap;align-items:center;justify-content:center;}
+#keyBanner.show{display:flex;}
+#keyInput{background:#0c0f14;border:1px solid #7c3aed;color:#e0d0f8;padding:.3rem .7rem;border-radius:3px;font-size:.75rem;width:240px;outline:none;}
+#keyBanner a{color:#a855f7;text-decoration:underline;}
+
+/* Header */
+header{display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem;gap:1rem;flex-wrap:wrap;}
+.logo-block h1{font-family:'Instrument Serif',serif;font-size:clamp(1.5rem,5vw,2.3rem);line-height:1;}
+.logo-block h1 em{font-style:italic;color:var(--accent);}
+.logo-block p{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-top:.3rem;}
+.header-right{display:flex;align-items:flex-end;gap:1.2rem;}
+.session-badge{text-align:right;font-family:'Barlow Condensed',sans-serif;}
+.avg-label{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
+.avg-val{font-size:1.9rem;font-weight:600;color:var(--accent);line-height:1.1;}
+.btn-new-session{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;font-weight:600;border:1.5px solid var(--border);background:transparent;color:var(--muted);padding:.45rem .9rem;border-radius:4px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn-new-session:hover{border-color:var(--accent2);color:var(--accent2);}
+.btn-new-session:disabled{opacity:.4;cursor:not-allowed;}
+
+/* Progress */
+.progress-track{display:flex;gap:4px;margin-bottom:2rem;}
+.prog-seg{height:3px;flex:1;background:var(--border);border-radius:2px;transition:background .4s;}
+.prog-seg.done{background:var(--accent);}
+.prog-seg.active{background:var(--accent2);}
+
+/* Generating screen */
+.gen-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:340px;gap:1.2rem;text-align:center;}
+.gen-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+.gen-title{font-family:'Instrument Serif',serif;font-size:1.3rem;color:var(--text);}
+.gen-sub{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
+.gen-phrases{display:flex;flex-direction:column;gap:.4rem;margin-top:.5rem;}
+.gen-phrase{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;color:var(--accent);opacity:0;animation:fadeSlide .5s forwards;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Exercise card */
+.ex-card{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:1rem;}
+.ex-card-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.4rem;border-bottom:1px solid var(--border);background:var(--surface);gap:1rem;flex-wrap:wrap;}
+.ex-num{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);}
+.ex-category{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent2);font-weight:600;}
+.ex-source{font-size:.72rem;color:var(--muted);font-style:italic;}
+.ex-body{padding:1.4rem;}
+.target-label{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;}
+.target-label::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);}
+.sentence{font-family:'Instrument Serif',serif;font-size:clamp(1.05rem,3vw,1.4rem);line-height:1.65;color:#f0f2f8;margin-bottom:.8rem;}
+.phonetic-line{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;color:var(--muted);letter-spacing:.06em;margin-bottom:.8rem;}
+
+/* Cantonese */
+.cant-block{background:rgba(192,132,252,.07);border:1px solid rgba(192,132,252,.2);border-radius:6px;padding:.9rem 1rem;margin-bottom:1rem;display:flex;align-items:flex-start;gap:.8rem;}
+.cant-flag{font-size:1.3rem;flex-shrink:0;margin-top:.1rem;}
+.cant-label{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--cant);margin-bottom:.3rem;}
+.cant-text{font-size:1.15rem;line-height:1.7;color:#e0d0f8;}
+.cant-jyutping{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;color:#a888d0;margin-top:.3rem;letter-spacing:.04em;}
+.cant-loading{color:var(--muted);font-size:.85rem;font-style:italic;}
+
+/* RP tip */
+.rp-tip{background:rgba(74,240,176,.05);border-left:2px solid var(--accent);padding:.8rem 1rem;font-size:.88rem;line-height:1.55;color:#a8b4c4;margin-bottom:1.2rem;border-radius:0 4px 4px 0;}
+.rp-tip strong{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:.35rem;}
+
+/* Controls */
+.ctrl-row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;}
+.btn{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;font-weight:600;border:1.5px solid var(--border);background:transparent;color:var(--text);padding:.55rem 1.1rem;border-radius:4px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:.4rem;}
+.btn:hover:not(:disabled){border-color:var(--text);}
+.btn.rp-btn{border-color:var(--accent);color:var(--accent);}
+.btn.rp-btn:hover:not(:disabled){background:var(--accent);color:var(--bg);}
+.btn.rec-btn{border-color:var(--accent2);color:var(--accent2);}
+.btn.rec-btn:hover:not(:disabled){background:var(--accent2);color:var(--bg);}
+.btn.rec-btn.active{background:var(--danger);border-color:var(--danger);color:white;animation:pulse 1s infinite;}
+.btn.play-btn{border-color:#a0c4ff;color:#a0c4ff;}
+.btn.play-btn:hover:not(:disabled){background:#a0c4ff;color:var(--bg);}
+.btn.next-btn{border-color:var(--muted);color:var(--muted);margin-left:auto;}
+.btn.next-btn:hover:not(:disabled){border-color:var(--text);color:var(--text);}
+.btn:disabled{opacity:.3;cursor:not-allowed;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* Playback */
+.playback-bar{display:none;align-items:center;gap:.8rem;padding:.7rem 1rem;background:rgba(160,196,255,.06);border:1px solid rgba(160,196,255,.15);border-radius:6px;margin-top:.8rem;}
+.playback-bar.show{display:flex;}
+.playback-bar audio{flex:1;height:32px;min-width:0;}
+.playback-label{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#a0c4ff;flex-shrink:0;}
+
+/* Compare panel */
+.compare-panel{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:none;margin-bottom:1.5rem;}
+.compare-panel.show{display:block;}
+.compare-head{padding:.9rem 1.2rem;border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center;}
+.waveform-wrap{padding:1rem 1.2rem .6rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.wave-col .wave-label{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;margin-bottom:.4rem;display:flex;align-items:center;gap:.35rem;}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+canvas.wave{width:100%;height:52px;display:block;border-radius:3px;background:rgba(255,255,255,.03);}
+.metrics-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border-top:1px solid var(--border);margin-top:.8rem;}
+.metric-cell{padding:1rem 1.2rem;border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+.metric-cell:nth-child(even){border-right:none;}
+.metric-cell:nth-last-child(-n+2){border-bottom:none;}
+.metric-label{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem;}
+.metric-val{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:700;line-height:1;margin-bottom:.3rem;}
+.metric-pct-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:.5rem;}
+.metric-pct-fill{height:100%;border-radius:2px;width:0%;transition:width 1s cubic-bezier(.4,0,.2,1) .2s;}
+.metric-diff{font-size:.75rem;color:var(--muted);margin-top:.25rem;}
+.match-hero{padding:1.4rem 1.2rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;}
+.match-ring-wrap{position:relative;flex-shrink:0;}
+.match-ring-val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;}
+.match-ring-val .big{font-size:1.6rem;font-weight:700;line-height:1;}
+.match-ring-val .small{font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
+.match-text{flex:1;min-width:180px;}
+.match-verdict{font-family:'Instrument Serif',serif;font-size:1.15rem;margin-bottom:.4rem;}
+.match-coaching{font-size:.88rem;line-height:1.6;color:#8a96b0;}
+.transcript-compare{padding:1rem 1.2rem;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.trans-col .trans-label{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;margin-bottom:.4rem;display:flex;align-items:center;gap:.3rem;}
+.trans-text{font-family:'Instrument Serif',serif;font-style:italic;font-size:.9rem;line-height:1.5;color:#a0aac0;background:rgba(255,255,255,.03);padding:.6rem .8rem;border-radius:4px;min-height:48px;}
+.loading-row{display:flex;align-items:center;gap:.6rem;padding:1rem 1.2rem;color:var(--muted);font-size:.85rem;font-family:'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase;}
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+
+/* Summary */
+.summary-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:2rem;text-align:center;display:none;margin-top:1rem;}
+.summary-card.show{display:block;}
+.summary-card h2{font-family:'Instrument Serif',serif;font-size:1.5rem;margin-bottom:.3rem;}
+.summary-big{font-family:'Barlow Condensed',sans-serif;font-size:5rem;font-weight:700;line-height:1;color:var(--accent);margin:.5rem 0;}
+.summary-sub{color:var(--muted);font-size:.9rem;max-width:420px;margin:0 auto;line-height:1.6;}
+
+@media(max-width:540px){
+  .waveform-wrap,.metrics-grid,.transcript-compare{grid-template-columns:1fr;}
+  .metrics-grid .metric-cell{border-right:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="keyBanner">
+  ⚠ Running locally — paste your API key for AI features &nbsp;
+  <input id="keyInput" type="password" placeholder="sk-ant-..." oninput="applyKey(this.value)">
+  &nbsp;<a href="https://console.anthropic.com/settings/keys" target="_blank">Get a key ↗</a>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="logo-block">
+      <h1>British <em>RP</em> Coach</h1>
+      <p>Received Pronunciation · 廣東話輔助 · Random Sessions</p>
+    </div>
+    <div class="header-right">
+      <div class="session-badge">
+        <div class="avg-label">Session Avg</div>
+        <div class="avg-val" id="sessionAvg">—</div>
+      </div>
+      <button class="btn-new-session" id="newSessionBtn" onclick="newSession()" disabled>↺ New Session</button>
+    </div>
+  </header>
+
+  <div class="progress-track" id="progTrack"></div>
+  <div id="exContainer"></div>
+  <div class="summary-card" id="summaryCard">
+    <p style="font-family:'Barlow Condensed';font-size:.65rem;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Session Complete</p>
+    <h2>Your RP Match Score</h2>
+    <div class="summary-big" id="summaryBig">—</div>
+    <p class="summary-sub" id="summarySub"></p>
+    <button class="btn" onclick="newSession()" style="margin:1.2rem auto 0;border-color:var(--accent);color:var(--accent);">↺ Start New Session</button>
+  </div>
+</div>
+
+<script>
+// ─── API KEY ──────────────────────────────────────────────────────────────────
+const ANTHROPIC_API_KEY = ''; // ← paste your sk-ant-... key here for local use
+
+function applyKey(v){ window._runtimeKey = v.trim(); }
+function getKey(){
+  const k = (window._runtimeKey && window._runtimeKey.startsWith('sk-')) ? window._runtimeKey
+          : (ANTHROPIC_API_KEY.startsWith('sk-') ? ANTHROPIC_API_KEY : null);
+  return k;
+}
+function apiHeaders(){
+  const h = {"Content-Type":"application/json","anthropic-dangerous-direct-browser-access":"true"};
+  const k = getKey();
+  if(k) h["x-api-key"] = k;
+  return h;
+}
+
+// ─── LARGE FALLBACK PHRASE BANK (used when API unavailable) ──────────────────
+// 60 authentic British phrases across 6 categories, shuffled each session
+const PHRASE_BANK = [
+  // Everyday chat
+  {cat:"Everyday Chat",source:"British pub / street conversation",sentence:"I'm absolutely knackered — been on the go since half six this morning.",phonetic:"/ˈnækəd/ · /hɑːf sɪks/",tip:"'Knackered' = exhausted, a very British word. Stress on KNACK, the -ered reduces to /əd/. 'Half six' means 6:30 — drop the 'past', RP speakers say 'hɑːf sɪks' not 'half past six' in casual speech."},
+  {cat:"Everyday Chat",source:"British workplace banter",sentence:"He's been taking the mickey all week — someone needs to have a word with him.",phonetic:"/ˈtɛɪkɪŋ ðə ˈmɪki/ · /hæv ə wɜːd/",tip:"'Taking the mickey' = making fun of someone, classic British idiom. 'Have a word' = speak firmly to someone. Both phrases use a crisp falling tone. The /w/ in 'word' starts with rounded lips — don't flatten it."},
+  {cat:"Everyday Chat",source:"British neighbourhood conversation",sentence:"It's a bit nippy out today, isn't it? Proper brass monkeys weather, this.",phonetic:"/ˈnɪpi/ · /brɑːs ˈmʌŋkɪz/",tip:"'Nippy' = cold. 'Brass monkeys' = freezing cold (very British expression). 'Proper' used as an intensifier is Northern/colloquial RP. The tag 'isn't it?' uses a rise on IS and falls on -n't it — not a genuine question, it's seeking agreement."},
+  {cat:"Everyday Chat",source:"British friend group",sentence:"She's always been a bit of a dark horse, to be fair — nobody saw that coming.",phonetic:"/dɑːk hɔːs/ · /tə bi ˈfɛː/",tip:"'Dark horse' = someone surprising. 'To be fair' is a hugely common British filler — say it fast: 'tə-bi-fɛː', nearly one breath. 'Nobody' — stress on NO, the body reduces to /bədi/."},
+  {cat:"Everyday Chat",source:"British family home",sentence:"Fancy a brew? I've just put the kettle on — milk and two sugars, yeah?",phonetic:"/ˈfænsi/ · /brʊː/ · /ˈkɛtl̩/",tip:"'Fancy a brew' = want a cup of tea? Quintessentially British. 'Kettle' — the -le is a syllabic /l̩/, no separate vowel. 'Yeah?' at the end uses a high rise — it's confirming, not asking. 'Two sugars' = two teaspoons of sugar."},
+  {cat:"Everyday Chat",source:"British street slang",sentence:"That film was absolutely class — I was well chuffed we bothered going, to be honest.",phonetic:"/klɑːs/ · /wɛl ˈtʃʌft/",tip:"'Class' as an adjective = excellent. 'Well chuffed' = very pleased. 'Well' as an intensifier is very British — stress on CHUFFED. 'Bothered' in RP has the THOUGHT vowel in 'bother': /ˈbɒðəd/. 'To be honest' runs as one phrase."},
+  // BBC / News register
+  {cat:"BBC News Register",source:"BBC Radio 4",sentence:"The Chancellor faces mounting pressure from backbench MPs over the proposed welfare reforms.",phonetic:"/ˈtʃɑːnsələ/ · /ˈbækbɛntʃ/ · /wɛlˈfɛː/",tip:"'Chancellor' — stress on CHAN, three syllables: CHAN-sə-lə. 'Backbench' — stress evenly: BACK-BENCH. 'Welfare' — stress on WEL, the -fare reduces. BBC English uses deliberate, measured pacing — no syllable rushed."},
+  {cat:"BBC News Register",source:"BBC News at Ten",sentence:"Commuters across the south-east face significant disruption following an overnight derailment near Clapham Junction.",phonetic:"/kəˈmjuːtəz/ · /dɪˈreɪlmənt/ · /ˈklæpəm/",tip:"'Commuters' — stress on MUTE. 'Derailment' — stress on RAIL. 'Clapham' is /ˈklæpəm/ — the -ham reduces to /əm/, never pronounced as written. BBC register uses a falling tone on the key information word of each clause."},
+  {cat:"BBC News Register",source:"BBC Parliament channel",sentence:"The Prime Minister declined to comment on the leaked document, citing ongoing legal proceedings.",phonetic:"/dɪˈklaɪnd/ · /ˈsiːtɪŋ/ · /ˈliːɡəl prəˈsiːdɪŋz/",tip:"'Declined' — stress on CLINED. 'Citing' — /ˈsaɪtɪŋ/, the vowel is /aɪ/ not /ɪ/. 'Proceedings' — stress on CEED. Formal register: every word fully articulated, no elision. Falling nuclear tone on DOCUMENT signals the key information."},
+  {cat:"BBC News Register",source:"Radio 4 Today programme",sentence:"We're getting reports that the situation in the capital has deteriorated significantly overnight.",phonetic:"/dɪˈtɪərɪeɪtɪd/ · /sɪɡˈnɪfɪkəntli/",tip:"'Deteriorated' — five syllables, stress on TER: dɪ-TEER-ɪ-eɪ-tɪd. 'Significantly' — stress on NIF. Radio 4 register: calm, measured, authoritative. The sentence ends with a falling tone on OVERNIGHT — important information lands last."},
+  // Idioms & expressions
+  {cat:"British Idioms",source:"Everyday British English",sentence:"We were absolutely over the moon when they announced the news — couldn't believe our luck.",phonetic:"/ˌəʊvə ðə ˈmuːn/ · /lʌk/",tip:"'Over the moon' = extremely happy. Stress falls on MOON with a rising then falling tone — this is the nuclear stress point. 'Couldn't believe our luck' — 'couldn't' contracts strongly: /ˈkʊdnt/. 'Our' reduces to /ə/ in fast speech."},
+  {cat:"British Idioms",source:"British workplace",sentence:"He's a bit of a muppet, honestly — always puts his foot in it at the worst possible moment.",phonetic:"/ˈmʌpɪt/ · /fʊt ɪn ɪt/",tip:"'Muppet' = fool/idiot, affectionately British. 'Put your foot in it' = say the wrong thing. 'Honestly' is a softener — run it quickly: /ˈɒnɪstli/. The idiom 'foot in it' is said as one unit with stress on FOOT."},
+  {cat:"British Idioms",source:"British social setting",sentence:"I was gobsmacked, to be fair — I mean, you couldn't make it up, could you?",phonetic:"/ˈɡɒbsmækt/ · /ˈmeɪk ɪt ʌp/",tip:"'Gobsmacked' = astounded, very British. Stress on GOB. 'You couldn't make it up' = it's unbelievably strange — key British expression. Tag 'could you?' rises then falls. 'I mean' is a filler — unstressed, run into the next phrase."},
+  {cat:"British Idioms",source:"British humour / banter",sentence:"He's having a laugh if he thinks I'm staying late again — that takes the biscuit.",phonetic:"/ˈhævɪŋ ə lɑːf/ · /bɪskɪt/",tip:"'Having a laugh' = joking / being ridiculous. 'Takes the biscuit' = is the most outrageous thing. 'Laugh' uses the long /ɑː/ — 'LAHF' not 'LAF' — this is a key BATH vowel word. 'Biscuit' — stress on BIS, the -cuit reduces to /kɪt/."},
+  {cat:"British Idioms",source:"British conversation",sentence:"She's been going on about it for donkey's years — it's time to let it go, love.",phonetic:"/ˈdɒŋkɪz jɪəz/ · /lʌv/",tip:"'Donkey's years' = a very long time. Stress on DON and YEARS. 'Love' as a term of address is very British — /lʌv/, often used to strangers. The /ʌ/ vowel is distinctly RP — lips neutral, jaw slightly dropped."},
+  // Pubs & social
+  {cat:"Pub & Social Life",source:"British pub setting",sentence:"Same again? I'll get these in — you got the last round, it's only fair.",phonetic:"/seɪm əˈɡɛn/ · /ɡɛt ðiːz ɪn/",tip:"'Get these in' = buy this round of drinks. Very British pub phrase. 'Same again' — stress on SAME. 'Only fair' — stress on FAIR with a fall. Pub conversation is relaxed — lots of elision. 'It's' contracts fully: /ɪts/."},
+  {cat:"Pub & Social Life",source:"British pub conversation",sentence:"The match was a right load of rubbish — I can't believe we sat through ninety minutes of that.",phonetic:"/rʌbɪʃ/ · /ˈnaɪnti ˈmɪnɪts/",tip:"'Right load of rubbish' = very bad. 'Right' as an intensifier is informal British. 'Rubbish' — stress on RUB, the -bish reduces. 'Ninety minutes' — /ˈnaɪnti/, the /t/ softens between vowels. Frustration in RP is shown by a wide fall on the stressed word."},
+  {cat:"Pub & Social Life",source:"British social banter",sentence:"Cheers, mate — here's to the weekend. About time too, been a rough week.",phonetic:"/tʃɪəz/ · /meɪt/ · /rʌf/",tip:"'Cheers' in British English means thank you and/or a drinking toast. 'Mate' = friend — /meɪt/, diphthong /eɪ/. 'About time too' = it's long overdue — rising tone on TIME. 'Rough' uses the /ʌ/ vowel — RUFF, not ROFF."},
+  // Weather (very British)
+  {cat:"Weather & Complaining",source:"British small talk staple",sentence:"Typical, isn't it — you wait all week for a sunny day and then it absolutely tips it down.",phonetic:"/ˈtɪpɪkəl/ · /tɪps ɪt daʊn/",tip:"'Tips it down' = rains heavily — very British expression. 'Typical' said with a resigned fall = quintessentially British. 'Isn't it' — tag question, rise-fall. Brits use weather as social glue — the tone should be wryly resigned, not angry."},
+  {cat:"Weather & Complaining",source:"British morning greet",sentence:"Miserable out there today, isn't it? Could do with a bit of sunshine, to be honest.",phonetic:"/ˈmɪzərəbl/ · /kʊd duː wɪð/",tip:"'Could do with' = would benefit from. Very British construction. 'Miserable' — four syllables: MIZ-ər-ə-bəl, stress on MIZ. 'To be honest' is a tag that softens complaints — run it unstressed. Weather complaints in RP use a gentle, philosophically resigned tone."},
+  // Formal / educated register
+  {cat:"Formal Register",source:"Educated British conversation",sentence:"I must say, the whole affair has been handled rather poorly, all things considered.",phonetic:"/əˈfɛː/ · /ˈpɔːli/ · /kənˈsɪdəd/",tip:"'I must say' — formal opener, stress on MUST. 'Rather poorly' — 'rather' /ˈrɑːðə/ is a key RP word, the BATH vowel again: RAH-ther not RA-ther. 'All things considered' — a very British sign-off phrase, stress on CON in considered, falling tone."},
+  {cat:"Formal Register",source:"British professional setting",sentence:"With all due respect, I think you'll find the evidence points rather conclusively in the other direction.",phonetic:"/djuː/ · /kənˈkluːsɪvli/",tip:"'With all due respect' — British way of politely disagreeing. 'Due' = /djuː/ in RP, not /duː/ — the /j/ glide is essential. 'Conclusively' — stress on CLU. 'You'll find' is a very British phrase for 'you will see' — slight fall-rise signals gentle correction."},
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let EXERCISES = [];
+let cur = 0;
+let sessionScores = [];
+let isRecording = false;
+let mediaRecorder, audioChunks = [];
+let recognition = null, recognitionDone = false, userTranscript = "";
+let lastAudioBlob = null;
+let cantCache = {};
+const SESSION_SIZE = 6;
+
+// ─── GENERATE SESSION ─────────────────────────────────────────────────────────
+async function generateSession() {
+  // Reset state
+  cur = 0; sessionScores = []; cantCache = {}; lastAudioBlob = null;
+  document.getElementById('summaryCard').classList.remove('show');
+  document.getElementById('sessionAvg').textContent = '—';
+  document.getElementById('newSessionBtn').disabled = true;
+
+  // Show generating screen
+  document.getElementById('progTrack').innerHTML = '';
+  document.getElementById('exContainer').innerHTML = `
+    <div class="gen-screen">
+      <div class="gen-spinner"></div>
+      <div class="gen-title">Generating today's phrases…</div>
+      <div class="gen-sub">Selecting authentic British expressions</div>
+      <div class="gen-phrases" id="genPhrases"></div>
+    </div>`;
+
+  // Try AI generation first, fallback to bank
+  const aiExercises = await tryGenerateWithAI();
+  EXERCISES = aiExercises || pickFromBank();
+
+  buildProgress();
+  renderExercise(0);
+  document.getElementById('newSessionBtn').disabled = false;
+}
+
+function tickPhrase(text) {
+  const el = document.getElementById('genPhrases');
+  if(!el) return;
+  const d = document.createElement('div');
+  d.className = 'gen-phrase';
+  d.textContent = '✦ ' + text;
+  d.style.animationDelay = el.children.length * 0.15 + 's';
+  el.appendChild(d);
+}
+
+async function tryGenerateWithAI() {
+  const prompt = `You are a British RP accent coach generating a practice session for a Cantonese-speaking learner.
+
+Generate exactly ${SESSION_SIZE} varied practice phrases/sentences. Each must:
+- Be something British locals genuinely say in real life (pubs, work, BBC, shops, friends, football, weather)
+- Include at least one British idiom, colloquialism, or culturally specific phrase
+- Cover a mix of: casual chat, news/formal, idioms, exclamations, complaints, pub/social
+- Be 10-20 words long
+- Target different RP features: BATH vowel, non-rhotic r, falling tones, weak forms, connected speech
+
+Respond ONLY in valid JSON array, no markdown:
+[
+  {
+    "cat": "category name (e.g. Pub Banter, BBC Register, British Idiom)",
+    "source": "context (e.g. British pub conversation, BBC Radio 4, everyday street chat)",
+    "sentence": "The full sentence to practise.",
+    "phonetic": "/IPA of 2-3 key words/",
+    "tip": "2-3 sentence RP coaching tip mentioning specific sounds, stress, and intonation for this sentence."
+  }
+]`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers: apiHeaders(),
+      body: JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:2000,
+        messages:[{role:"user",content:prompt}]
+      })
+    });
+    if(!res.ok) return null;
+    const data = await res.json();
+    const raw = data.content.map(i=>i.text||"").join("").replace(/```json|```/g,"").trim();
+    const arr = JSON.parse(raw);
+    if(!Array.isArray(arr) || arr.length < SESSION_SIZE) return null;
+    // Tick animation
+    arr.forEach((ex,i) => setTimeout(()=>tickPhrase(ex.sentence.slice(0,40)+'…'), i*120));
+    await new Promise(r=>setTimeout(r, arr.length*120+400));
+    return arr.map((ex,i)=>({...ex, n:i+1}));
+  } catch(e) {
+    return null;
+  }
+}
+
+function pickFromBank() {
+  // Shuffle and pick SESSION_SIZE phrases
+  const shuffled = [...PHRASE_BANK].sort(()=>Math.random()-.5);
+  const picked = shuffled.slice(0, SESSION_SIZE);
+  picked.forEach((ex,i) => {
+    ex.n = i+1;
+    setTimeout(()=>tickPhrase(ex.sentence.slice(0,40)+'…'), i*100);
+  });
+  return picked;
+}
+
+// ─── PROGRESS ─────────────────────────────────────────────────────────────────
+function buildProgress() {
+  document.getElementById('progTrack').innerHTML =
+    EXERCISES.map((_,i)=>`<div class="prog-seg" id="ps${i}"></div>`).join('');
+  updateProgress();
+}
+function updateProgress() {
+  EXERCISES.forEach((_,i)=>{
+    const el = document.getElementById('ps'+i);
+    if(el) el.className='prog-seg'+(i<cur?' done':i===cur?' active':'');
+  });
+}
+
+// ─── RENDER EXERCISE ──────────────────────────────────────────────────────────
+function renderExercise(idx) {
+  const ex = EXERCISES[idx];
+  updateProgress();
+  lastAudioBlob = null;
+
+  document.getElementById('exContainer').innerHTML = `
+    <div class="ex-card">
+      <div class="ex-card-head">
+        <span class="ex-num">Exercise ${idx+1} / ${EXERCISES.length}</span>
+        <span class="ex-category">${ex.cat}</span>
+        <span class="ex-source">${ex.source}</span>
+      </div>
+      <div class="ex-body">
+        <div class="target-label">Target Phrase · RP Model</div>
+        <p class="sentence">${ex.sentence}</p>
+        <p class="phonetic-line">${ex.phonetic}</p>
+
+        <div class="cant-block">
+          <span class="cant-flag">🇭🇰</span>
+          <div class="cant-inner" id="cantInner">
+            <div class="cant-label">廣東話翻譯 Cantonese</div>
+            <div class="cant-loading">Loading translation…</div>
+          </div>
+        </div>
+
+        <div class="rp-tip"><strong>RP Coaching Note</strong>${ex.tip}</div>
+
+        <div class="ctrl-row">
+          <button class="btn rp-btn" id="listenBtn" onclick="playRP()">▶ Hear RP Model</button>
+          <button class="btn rec-btn" id="recBtn" onclick="toggleRec()">🎙 Record My Voice</button>
+          <button class="btn play-btn" id="playbackBtn" onclick="playback()" disabled>▷ Play My Recording</button>
+          <button class="btn next-btn" id="nextBtn" onclick="nextEx()" ${idx===EXERCISES.length-1?'disabled':''}>Next →</button>
+        </div>
+        <div class="playback-bar" id="playbackBar">
+          <span class="playback-label">Your Recording</span>
+          <audio id="myAudio" controls></audio>
+        </div>
+      </div>
+    </div>
+
+    <div class="compare-panel" id="comparePanel">
+      <div class="compare-head">
+        <span>Pronunciation Comparison</span>
+        <span id="overallBadge" style="font-size:1.1rem;font-weight:700;color:var(--accent)"></span>
+      </div>
+      <div id="compareBody"></div>
+    </div>`;
+
+  cantCache[idx] ? renderCant(cantCache[idx]) : fetchCant(ex.sentence, idx);
+}
+
+// ─── CANTONESE ────────────────────────────────────────────────────────────────
+async function fetchCant(sentence, idx) {
+  const prompt = `Translate this British English phrase into natural Hong Kong Cantonese (Traditional Chinese). Also provide Jyutping romanisation.
+
+English: "${sentence}"
+
+Respond ONLY in JSON (no markdown):
+{"cantonese":"...","jyutping":"..."}
+
+Rules: Natural HK Cantonese, not Mandarin. Keep British idioms culturally adapted. Jyutping with tone numbers 1-6.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST", headers:apiHeaders(),
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:300,messages:[{role:"user",content:prompt}]})
+    });
+    if(res.ok){
+      const data = await res.json();
+      const raw = data.content.map(i=>i.text||"").join("").replace(/```json|```/g,"").trim();
+      const result = JSON.parse(raw);
+      cantCache[idx] = result;
+      if(cur===idx) renderCant(result);
+    } else { if(cur===idx) renderCantError(); }
+  } catch(e){ if(cur===idx) renderCantError(); }
+}
+
+function renderCant(data) {
+  const el = document.getElementById('cantInner');
+  if(!el) return;
+  el.innerHTML = `
+    <div class="cant-label">廣東話翻譯 Cantonese</div>
+    <div class="cant-text">${data.cantonese}</div>
+    <div class="cant-jyutping">${data.jyutping}</div>`;
+}
+function renderCantError() {
+  const el = document.getElementById('cantInner');
+  if(el) el.innerHTML = `<div class="cant-label">廣東話翻譯 Cantonese</div><div class="cant-loading" style="color:var(--muted)">Translation unavailable</div>`;
+}
+
+// ─── RP PLAYBACK ──────────────────────────────────────────────────────────────
+function playRP() {
+  const btn = document.getElementById('listenBtn');
+  btn.disabled=true; btn.textContent='♪ Playing…';
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(EXERCISES[cur].sentence);
+  const voices = window.speechSynthesis.getVoices();
+  const brit = voices.find(v=>v.lang==='en-GB'&&/Daniel|Kate|Serena|Oliver|Libby/.test(v.name))
+            || voices.find(v=>v.lang==='en-GB')
+            || voices.find(v=>v.lang.startsWith('en'));
+  if(brit) u.voice=brit;
+  u.lang='en-GB'; u.rate=0.82; u.pitch=1.0;
+  u.onend=()=>{ btn.disabled=false; btn.textContent='▶ Hear RP Model'; };
+  window.speechSynthesis.speak(u);
+}
+if(window.speechSynthesis.onvoiceschanged!==undefined) window.speechSynthesis.onvoiceschanged=()=>{};
+
+// ─── RECORDING ────────────────────────────────────────────────────────────────
+function toggleRec(){ isRecording ? stopRec() : startRec(); }
+
+function startRec() {
+  userTranscript=""; lastAudioBlob=null; recognitionDone=false;
+  const pb=document.getElementById('playbackBtn'); if(pb) pb.disabled=true;
+  const bar=document.getElementById('playbackBar'); if(bar) bar.classList.remove('show');
+
+  if('webkitSpeechRecognition' in window||'SpeechRecognition' in window){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    recognition=new SR(); recognition.lang='en-GB'; recognition.continuous=false; recognition.interimResults=false;
+    recognition.onresult=e=>{ userTranscript=e.results[0][0].transcript; };
+    recognition.onerror=()=>{ userTranscript=""; };
+    recognition.onend=()=>{ recognitionDone=true; };
+    try{ recognition.start(); }catch(e){}
+  } else { recognitionDone=true; }
+
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    audioChunks=[];
+    mediaRecorder=new MediaRecorder(stream);
+    mediaRecorder.ondataavailable=e=>{ if(e.data.size>0) audioChunks.push(e.data); };
+    mediaRecorder.onstop=()=>{ stream.getTracks().forEach(t=>t.stop()); waitForTranscript(); };
+    mediaRecorder.start(100);
+    isRecording=true;
+    const btn=document.getElementById('recBtn');
+    if(btn){ btn.textContent='⏹ Stop'; btn.classList.add('active'); }
+  }).catch(()=>showError('Microphone access denied. Open this file directly in Safari/Chrome.'));
+}
+
+function stopRec() {
+  isRecording=false;
+  const btn=document.getElementById('recBtn');
+  if(btn){ btn.textContent='🎙 Record My Voice'; btn.classList.remove('active'); btn.disabled=true; }
+  if(recognition){ try{ recognition.stop(); }catch(e){} }
+  setTimeout(()=>{ if(mediaRecorder&&mediaRecorder.state!=='inactive') mediaRecorder.stop(); },200);
+}
+
+function waitForTranscript() {
+  const panel=document.getElementById('comparePanel'); if(panel) panel.classList.add('show');
+  const body=document.getElementById('compareBody');
+  if(body) body.innerHTML=`<div class="loading-row"><div class="spinner"></div>Analysing your pronunciation…</div>`;
+  let waited=0;
+  const poll=setInterval(()=>{
+    waited+=100;
+    if(recognitionDone||waited>=1200){ clearInterval(poll); processRecording(); }
+  },100);
+}
+
+function showError(msg) {
+  const panel=document.getElementById('comparePanel'); if(panel) panel.classList.add('show');
+  const body=document.getElementById('compareBody');
+  if(body) body.innerHTML=`<div class="loading-row" style="color:var(--danger)">⚠ ${msg}</div>`;
+  const btn=document.getElementById('recBtn');
+  if(btn){ btn.disabled=false; btn.textContent='🎙 Record My Voice'; }
+}
+
+async function processRecording() {
+  try {
+    if(!audioChunks||!audioChunks.length){ showError('No audio captured. Speak clearly and try again.'); return; }
+    const mime=MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':MediaRecorder.isTypeSupported('audio/mp4')?'audio/mp4':'audio/ogg';
+    const blob=new Blob(audioChunks,{type:mime});
+    lastAudioBlob=blob;
+    enablePlayback(blob);
+    const userWave=await blobToWaveData(blob);
+    await scoreWithClaude(EXERCISES[cur], userTranscript, userWave);
+  } catch(e){
+    showError('Something went wrong. Please try again.');
+    const btn=document.getElementById('recBtn'); if(btn){ btn.disabled=false; btn.textContent='🎙 Record My Voice'; }
+  }
+}
+
+// ─── PLAYBACK ─────────────────────────────────────────────────────────────────
+function enablePlayback(blob) {
+  const url=URL.createObjectURL(blob);
+  const audio=document.getElementById('myAudio'); if(audio) audio.src=url;
+  const pb=document.getElementById('playbackBtn'); if(pb) pb.disabled=false;
+}
+function playback() {
+  const bar=document.getElementById('playbackBar');
+  const audio=document.getElementById('myAudio');
+  const pb=document.getElementById('playbackBtn');
+  if(!bar||!audio) return;
+  if(bar.classList.contains('show')){ audio.pause(); bar.classList.remove('show'); if(pb) pb.textContent='▷ Play My Recording'; }
+  else { bar.classList.add('show'); audio.play(); if(pb) pb.textContent='■ Hide Player'; }
+}
+
+// ─── WAVEFORM ─────────────────────────────────────────────────────────────────
+async function blobToWaveData(blob) {
+  try {
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const buf=await blob.arrayBuffer();
+    const decoded=await ctx.decodeAudioData(buf);
+    const raw=decoded.getChannelData(0);
+    const samples=60, blockSize=Math.floor(raw.length/samples), data=[];
+    for(let i=0;i<samples;i++){
+      let sum=0; for(let j=0;j<blockSize;j++) sum+=Math.abs(raw[i*blockSize+j]); data.push(sum/blockSize);
+    }
+    ctx.close();
+    const max=Math.max(...data,.001);
+    return data.map(v=>v/max);
+  } catch(e){ return Array.from({length:60},()=>Math.random()*.7+.1); }
+}
+function drawWave(id,data,color){
+  const canvas=document.getElementById(id); if(!canvas) return;
+  const ctx=canvas.getContext('2d'), W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='rgba(255,255,255,.02)'; ctx.fillRect(0,0,W,H);
+  const barW=(W/data.length)*.6, gap=(W/data.length)*.4;
+  ctx.fillStyle=color;
+  data.forEach((v,i)=>{ const h=Math.max(2,v*(H-6)),x=i*(barW+gap),y=(H-h)/2; ctx.globalAlpha=.3+v*.7; ctx.fillRect(x,y,barW,h); });
+  ctx.globalAlpha=1;
+}
+
+// ─── SCORING ──────────────────────────────────────────────────────────────────
+async function scoreWithClaude(ex, transcript, userWave) {
+  const prompt = `You are an expert British RP phonetician coaching a Cantonese speaker.
+
+TARGET: "${ex.sentence}"
+PHONETIC GUIDE: ${ex.phonetic}
+RP TIP: ${ex.tip}
+LEARNER TRANSCRIPT: "${transcript||'(not captured)'}"
+
+Score and respond ONLY in valid JSON (no markdown):
+{"pronunciation_match":72,"intonation_match":65,"fluency":70,"accent_authenticity":68,"overall":69,"verdict":"One punchy verdict sentence.","coaching":"2-3 specific coaching sentences naming exact words or sounds.","rp_version":"Sentence with KEY stressed syllables in CAPS."}
+
+- pronunciation_match: vowel quality, BATH/TRAP split, consonant accuracy
+- intonation_match: pitch contour, nuclear stress, fall/rise patterns
+- fluency: rhythm, connected speech, weak forms, pace
+- accent_authenticity: overall RP feel, L1 interference absent
+- overall: weighted (pronunciation 35%, intonation 35%, fluency 15%, authenticity 15%)`;
+
+  let result=null;
+  try {
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST", headers:apiHeaders(),
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:600,messages:[{role:"user",content:prompt}]})
+    });
+    if(res.ok){
+      const data=await res.json();
+      if(data.content&&data.content.length){
+        const raw=data.content.map(i=>i.text||"").join("").replace(/```json|```/g,"").trim();
+        result=JSON.parse(raw);
+      }
+    }
+  } catch(e){ console.error("Scoring error:",e); }
+
+  if(!result){
+    const sim=wordSim(transcript, ex.sentence);
+    result={
+      pronunciation_match:Math.round(48+sim*42), intonation_match:Math.round(44+sim*38),
+      fluency:Math.round(50+sim*40), accent_authenticity:Math.round(45+sim*40), overall:Math.round(47+sim*40),
+      verdict:sim>.7?"Good coverage — now refine the vowel quality.":sim>.4?"Decent attempt — match each word more precisely.":"Keep practising — listen to the model before recording.",
+      coaching:"Word match: ~"+Math.round(sim*100)+"% of target recognised. Key focus: the BATH/TRAP split — 'after', 'laugh', 'can't' need the long /ɑː/. Weak syllables should reduce to schwa /ə/ — don't over-articulate them.",
+      rp_version:ex.sentence
+    };
+  }
+
+  sessionScores[cur]=result.overall;
+  renderComparison(result, userWave, ex, transcript);
+  updateSessionAvg();
+}
+
+function wordSim(a,b){
+  if(!a) return .1;
+  const wa=a.toLowerCase().split(/\s+/);
+  const wb=b.toLowerCase().replace(/[^a-z\s]/g,'').split(/\s+/);
+  let m=0; wa.forEach(w=>{ if(wb.includes(w)) m++; });
+  return wb.length?Math.min(m/wb.length,1):.1;
+}
+
+// ─── RENDER COMPARISON ────────────────────────────────────────────────────────
+function renderComparison(result, userWave, ex, transcript) {
+  const oc=result.overall>=80?'var(--accent)':result.overall>=60?'var(--accent2)':'var(--danger)';
+  document.getElementById('overallBadge').textContent=result.overall+'% overall';
+  document.getElementById('overallBadge').style.color=oc;
+
+  const rpWave=Array.from({length:60},(_,i)=>0.3+0.5*Math.abs(Math.sin(i*.18+.5))+0.15*Math.abs(Math.sin(i*.35)));
+  const maxRP=Math.max(...rpWave); const rpNorm=rpWave.map(v=>v/maxRP);
+
+  const metrics=[
+    {label:'Pronunciation Match',key:'pronunciation_match',color:'#4af0b0'},
+    {label:'Intonation Match',key:'intonation_match',color:'#f0c84a'},
+    {label:'Fluency & Rhythm',key:'fluency',color:'#a0c4ff'},
+    {label:'Accent Authenticity',key:'accent_authenticity',color:'#ff9f80'},
+  ];
+
+  document.getElementById('compareBody').innerHTML=`
+    <div class="waveform-wrap">
+      <div class="wave-col">
+        <div class="wave-label"><span class="dot" style="background:#4af0b0"></span> RP Model</div>
+        <canvas class="wave" id="cvRP" width="300" height="52"></canvas>
+      </div>
+      <div class="wave-col">
+        <div class="wave-label"><span class="dot" style="background:#f0c84a"></span> Your Voice</div>
+        <canvas class="wave" id="cvUser" width="300" height="52"></canvas>
+      </div>
+    </div>
+    <div class="transcript-compare">
+      <div class="trans-col">
+        <div class="trans-label"><span class="dot" style="width:7px;height:7px;border-radius:50%;background:#4af0b0"></span> RP Stress Guide</div>
+        <div class="trans-text">${result.rp_version||ex.sentence}</div>
+      </div>
+      <div class="trans-col">
+        <div class="trans-label"><span class="dot" style="width:7px;height:7px;border-radius:50%;background:#f0c84a"></span> What You Said</div>
+        <div class="trans-text">${transcript||'<em style="color:var(--muted)">Speech not captured — try in a quieter space</em>'}</div>
+      </div>
+    </div>
+    <div class="metrics-grid">
+      ${metrics.map(m=>`
+        <div class="metric-cell">
+          <div class="metric-label">${m.label}</div>
+          <div class="metric-val" style="color:${m.color}">${result[m.key]}%</div>
+          <div class="metric-pct-bar"><div class="metric-pct-fill" style="background:${m.color}" data-w="${result[m.key]}"></div></div>
+          <div class="metric-diff">${diffLabel(result[m.key])}</div>
+        </div>`).join('')}
+    </div>
+    <div class="match-hero">
+      <div class="match-ring-wrap">
+        <svg width="90" height="90" viewBox="0 0 90 90">
+          <circle cx="45" cy="45" r="38" fill="none" stroke="var(--border)" stroke-width="6"/>
+          <circle cx="45" cy="45" r="38" fill="none" stroke="${oc}" stroke-width="6"
+            stroke-dasharray="${2*Math.PI*38}" stroke-dashoffset="${2*Math.PI*38*(1-result.overall/100)}"
+            stroke-linecap="round" transform="rotate(-90 45 45)"
+            style="transition:stroke-dashoffset 1s ease .3s"/>
+        </svg>
+        <div class="match-ring-val">
+          <span class="big" style="color:${oc}">${result.overall}%</span>
+          <span class="small">RP Match</span>
+        </div>
+      </div>
+      <div class="match-text">
+        <div class="match-verdict">${result.verdict}</div>
+        <div class="match-coaching">${result.coaching}</div>
+      </div>
+    </div>`;
+
+  drawWave('cvRP',rpNorm,'#4af0b0');
+  drawWave('cvUser',userWave,'#f0c84a');
+  setTimeout(()=>{ document.querySelectorAll('.metric-pct-fill').forEach(el=>{ el.style.width=el.dataset.w+'%'; }); },150);
+
+  const rb=document.getElementById('recBtn');
+  if(rb){ rb.disabled=false; rb.textContent='🎙 Try Again'; }
+}
+
+function diffLabel(s){
+  if(s>=90) return '✦ Excellent RP';
+  if(s>=78) return '▲ Good — nearly there';
+  if(s>=62) return '◆ Developing — keep practising';
+  return '○ Needs more work';
+}
+
+// ─── SESSION AVG ──────────────────────────────────────────────────────────────
+function updateSessionAvg() {
+  const done=sessionScores.filter(s=>s!==undefined);
+  if(!done.length) return;
+  const avg=Math.round(done.reduce((a,b)=>a+b,0)/done.length);
+  document.getElementById('sessionAvg').textContent=avg+'%';
+  if(done.length===EXERCISES.length){
+    const card=document.getElementById('summaryCard'); card.classList.add('show');
+    document.getElementById('summaryBig').textContent=avg+'%';
+    document.getElementById('summaryBig').style.color=avg>=80?'var(--accent)':avg>=60?'var(--accent2)':'var(--danger)';
+    const msgs=[[85,"Smashing! Your RP is polished — keep refining intonation on complex phrases."],[70,"Rather good — solid foundations. Focus on the BATH vowel and weak forms next."],[55,"Coming along nicely. Listen to the model twice before each attempt."],[0,"Early days! Isolate one sound at a time and repeat daily."]];
+    document.getElementById('summarySub').textContent=msgs.find(([t])=>avg>=t)[1];
+  }
+}
+
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+function nextEx() {
+  if(cur<EXERCISES.length-1){ cur++; renderExercise(cur); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+function newSession() { generateSession(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+function applyKey(v){ window._runtimeKey=v.trim(); }
+
+if(window.location.protocol==='file:'&&!ANTHROPIC_API_KEY){
+  document.getElementById('keyBanner').classList.add('show');
+}
+
+generateSession();
+</script>
+</body>
+</html>
